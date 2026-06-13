@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kanban Studio</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232f7df6'/%3E%3Cpath fill='white' d='M18 17h8v30h-8zm12 0h8v22h-8zm12 0h8v14h-8z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Board controls">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">K</span>
+          <div>
+            <h1>Kanban Studio</h1>
+            <p>Flow-focused task planning</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <label class="field-label" for="boardSwitcher">Board</label>
+          <select id="boardSwitcher" class="input"></select>
+
+          <div class="split-actions">
+            <button id="newBoardBtn" class="button" type="button">New board</button>
+            <button id="duplicateBoardBtn" class="button" type="button">Duplicate</button>
+          </div>
+
+          <label class="field-label" for="boardTitle">Board name</label>
+          <input id="boardTitle" class="input" type="text" autocomplete="off">
+        </div>
+
+        <div class="panel stats-grid" aria-label="Board statistics">
+          <div>
+            <span id="statCards">0</span>
+            <p>Cards</p>
+          </div>
+          <div>
+            <span id="statDone">0%</span>
+            <p>Done</p>
+          </div>
+          <div>
+            <span id="statOverdue">0</span>
+            <p>Overdue</p>
+          </div>
+          <div>
+            <span id="statColumns">0</span>
+            <p>Lists</p>
+          </div>
+        </div>
+
+        <div class="panel control-stack">
+          <button id="addColumnBtn" class="button primary" type="button">
+            <span aria-hidden="true">+</span>
+            Add list
+          </button>
+          <button id="addCardBtn" class="button" type="button">
+            <span aria-hidden="true">+</span>
+            Add card
+          </button>
+        </div>
+
+        <div class="panel control-stack">
+          <label class="field-label" for="searchInput">Search</label>
+          <input id="searchInput" class="input" type="search" placeholder="Title, notes, assignee...">
+
+          <label class="field-label" for="priorityFilter">Priority</label>
+          <select id="priorityFilter" class="input">
+            <option value="all">All priorities</option>
+            <option value="urgent">Urgent</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+
+          <label class="field-label" for="labelFilter">Label</label>
+          <select id="labelFilter" class="input">
+            <option value="all">All labels</option>
+          </select>
+        </div>
+
+        <div class="panel control-stack">
+          <button id="exportBtn" class="button" type="button">Export JSON</button>
+          <label class="button file-button" for="importInput">Import JSON</label>
+          <input id="importInput" class="visually-hidden" type="file" accept="application/json">
+          <button id="resetBtn" class="button danger" type="button">Reset board</button>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Today</p>
+            <h2 id="currentBoardTitle">Product Roadmap</h2>
+          </div>
+          <div class="topbar-actions">
+            <button id="archiveBtn" class="button" type="button">Archive</button>
+            <button id="activityBtn" class="button" type="button">Activity</button>
+            <button id="clearFiltersBtn" class="icon-button" type="button" title="Clear filters" aria-label="Clear filters">×</button>
+            <button id="themeToggle" class="icon-button" type="button" title="Toggle theme" aria-label="Toggle theme">◐</button>
+          </div>
+        </header>
+
+        <section id="board" class="board" aria-label="Kanban board"></section>
+      </main>
+    </div>
+
+    <dialog id="cardDialog" class="dialog">
+      <form id="cardForm" method="dialog" class="dialog-card">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">Card details</p>
+            <h3 id="cardDialogTitle">Add card</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="button" data-close-dialog aria-label="Close">×</button>
+        </div>
+
+        <input id="cardId" type="hidden">
+
+        <label class="field-label" for="cardTitle">Title</label>
+        <input id="cardTitle" class="input" type="text" required maxlength="80">
+
+        <label class="field-label" for="cardDescription">Notes</label>
+        <textarea id="cardDescription" class="input textarea" rows="4" maxlength="600"></textarea>
+
+        <div class="form-grid">
+          <div>
+            <label class="field-label" for="cardColumn">List</label>
+            <select id="cardColumn" class="input" required></select>
+          </div>
+          <div>
+            <label class="field-label" for="cardPriority">Priority</label>
+            <select id="cardPriority" class="input">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label class="field-label" for="cardDueDate">Due date</label>
+            <input id="cardDueDate" class="input" type="date">
+          </div>
+          <div>
+            <label class="field-label" for="cardAssignee">Assignee</label>
+            <input id="cardAssignee" class="input" type="text" maxlength="36">
+          </div>
+        </div>
+
+        <label class="field-label" for="cardLabels">Labels</label>
+        <input id="cardLabels" class="input" type="text" placeholder="Design, Backend, Launch">
+
+        <div class="checklist-editor">
+          <div class="section-heading">
+            <label class="field-label" for="checklistInput">Checklist</label>
+            <span id="checklistCount">0 items</span>
+          </div>
+          <div id="checklistItems" class="checklist-items"></div>
+          <div class="inline-add">
+            <input id="checklistInput" class="input" type="text" placeholder="Add checklist item">
+            <button id="addChecklistItemBtn" class="button" type="button">Add</button>
+          </div>
+        </div>
+
+        <div class="dialog-actions">
+          <button id="deleteCardBtn" class="button danger ghost" type="button">Delete</button>
+          <button id="archiveCardBtn" class="button ghost" type="button">Archive</button>
+          <span class="spacer"></span>
+          <button class="button" value="cancel" type="button" data-close-dialog>Cancel</button>
+          <button class="button primary" value="default" type="submit">Save card</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="archiveDialog" class="dialog">
+      <div class="dialog-card">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">Saved for later</p>
+            <h3>Archive</h3>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog aria-label="Close">×</button>
+        </div>
+        <div id="archiveList" class="archive-list"></div>
+      </div>
+    </dialog>
+
+    <dialog id="activityDialog" class="dialog">
+      <div class="dialog-card">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">Board timeline</p>
+            <h3>Activity</h3>
+          </div>
+          <button class="icon-button" type="button" data-close-dialog aria-label="Close">×</button>
+        </div>
+        <div id="activityList" class="activity-list"></div>
+      </div>
+    </dialog>
+
+    <dialog id="columnDialog" class="dialog">
+      <form id="columnForm" method="dialog" class="dialog-card compact">
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">List setup</p>
+            <h3 id="columnDialogTitle">Add list</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="button" data-close-dialog aria-label="Close">×</button>
+        </div>
+
+        <input id="columnId" type="hidden">
+        <label class="field-label" for="columnTitle">List name</label>
+        <input id="columnTitle" class="input" type="text" required maxlength="36">
+
+        <label class="field-label" for="columnAccent">Accent color</label>
+        <input id="columnAccent" class="color-input" type="color" value="#2f7df6">
+
+        <div class="dialog-actions">
+          <button id="deleteColumnBtn" class="button danger ghost" type="button">Delete</button>
+          <span class="spacer"></span>
+          <button class="button" value="cancel" type="button" data-close-dialog>Cancel</button>
+          <button class="button primary" value="default" type="submit">Save list</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
